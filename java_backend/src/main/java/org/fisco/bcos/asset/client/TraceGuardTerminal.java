@@ -29,7 +29,7 @@ public class TraceGuardTerminal {
     // --- 1. 基础配置 ---
     private static String getContractAddress() {
         Properties prop = new Properties();
-        // 指向你通过 Deployment 同步过来的或手动放好的属性文件
+        // 指向同步过来的或手动放好的属性文件
         String path = "dist/conf/contract.properties";
         try (FileInputStream fis = new FileInputStream(path)) {
             prop.load(fis);
@@ -39,9 +39,9 @@ public class TraceGuardTerminal {
             return null;
         }
     }
-    private static final String configPath = "src/main/resources/config.toml";
-    private static final String privateKeyHex = "baf29ec1c59c003b4be1f06ac5f482cfe46bb64faf3bff823599c1f7de7a1317";
-    private static final String exchangePath = "C:/Users/15363/PycharmProjects/PythonProject4/dl_detection/exchange_folder";
+    private static final String configPath = "dist/conf/config.toml";
+    private static final String privateKeyHex = "YOUR_KEY";
+    private static final String exchangePath = ".../exchange_folder";
     private static final String SALT = "My_Project_Salt_2026";
     private static final String IP_MAP_FILE = "ip_map.properties";
 
@@ -84,7 +84,7 @@ public class TraceGuardTerminal {
 
             String choice = scanner.nextLine().trim();
 
-// --- 【新增：tps 指令解析逻辑】 ---
+// --- 【tps 指令解析逻辑】 ---
             if (choice.startsWith("tps ")) {
                 try {
                     int amount = Integer.parseInt(choice.substring(4));
@@ -161,8 +161,8 @@ public class TraceGuardTerminal {
                     String ipHash = json.get("ip_hash").getAsString();
                     String realIp = json.has("real_ip") ? json.get("real_ip").getAsString() : "Unknown";
 
-                    // 【核心修改】：不再接收 TransactionReceipt，而是传入一个 TransactionCallback
-                    // 注意：这里调用的 uploadEvidence 最后一个参数是回调对象
+                    // 不再接收 TransactionReceipt，而是传入一个 TransactionCallback
+                    // 这里调用的 uploadEvidence 最后一个参数是回调对象
                     traceGuard.uploadEvidence(
                             json.get("feature_hash").getAsString(),
                             ipHash,
@@ -171,7 +171,7 @@ public class TraceGuardTerminal {
                             new org.fisco.bcos.sdk.model.callback.TransactionCallback() {
                                 @Override
                                 public void onResponse(TransactionReceipt receipt) {
-                                    // 只有区块链真正确认了（出块了），才会进入这个方法
+                                    // 只有区块链真正确认了（出块了），才会进入
                                     if ("0x0".equals(receipt.getStatus())) {
                                         totalProcessed.incrementAndGet();
                                         long latencyNano = System.nanoTime() - txStartNano;
@@ -182,7 +182,7 @@ public class TraceGuardTerminal {
                                         File destFile = new File(archiveDir, file.getName());
                                         file.renameTo(destFile);
 
-                                        // 这里可以只在每完成 10 笔时打印一次，防止刷屏影响性能
+                                        // 只在每完成 10 笔时打印一次，防止刷屏影响性能
                                         if (totalProcessed.get() % 5 == 0 || totalProcessed.get() == files.length) {
                                             System.out.println("✅ [后台确认] 已完成: " + totalProcessed.get() + "/" + files.length);
                                         }
@@ -193,7 +193,7 @@ public class TraceGuardTerminal {
                             }
                     );
 
-                    // 打印投递状态（这步非常快，不代表上链成功，只代表发给了节点）
+                    // 打印投递状态
                     // System.out.println("📤 已投递: " + file.getName());
 
                 } catch (Exception e) {
@@ -288,7 +288,6 @@ public class TraceGuardTerminal {
             String name = ipLookup.getOrDefault(row.ipHash, row.ipHash.substring(0, 8) + "...");
             ipRankMap.put(name, ipRankMap.getOrDefault(name, Integer.valueOf(0)) + 1);
 
-// 针对 timeDistMap 这一长串，建议分两步写，既清晰又防错：
             String dayKey = daySdf.format(new Date(row.timestamp.longValue()));
             timeDistMap.put(dayKey, timeDistMap.getOrDefault(dayKey, Integer.valueOf(0)) + 1);
         }
@@ -478,7 +477,7 @@ public class TraceGuardTerminal {
     }
 
     /**
-     * 【核心新增】全维度性能测试引擎
+     * 全维度性能测试引擎
      * @param mode   1: 改(update), 2: 删(revoke), 3: 查(query)
      * @param amount 测试样本量
      */

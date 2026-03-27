@@ -6,11 +6,12 @@ import json
 import hashlib
 import time
 import os
+import sys
 import ipaddress  # 用于合法性校验
 
 # ================= 配置区 =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_PATH = r"C:\Users\15363\PycharmProjects\PythonProject4\data_preparation\Mixed_DDoS2019_Dataset.csv"
+DATASET_PATH = os.path.join(BASE_DIR, "Mixed_DDoS2019_Dataset.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "models", "ddos_cnn_v1.h5")
 SCALER_PATH = os.path.join(BASE_DIR, "models", "scaler_v1.pkl")
 META_PATH = os.path.join(BASE_DIR, "models", "model_meta.json")
@@ -18,7 +19,7 @@ META_PATH = os.path.join(BASE_DIR, "models", "model_meta.json")
 EXCHANGE_DIR = os.path.join(BASE_DIR, "exchange_folder")
 ARCHIVE_DIR = os.path.join(BASE_DIR, "archived_evidence")
 
-# 定义特征的合理取值范围 (防错逻辑)
+# 定义特征的合理取值范围 
 RANGES = {
     "packets": (1, 1000000),  # 转发包数：1 到 100万
     "duration": (0, 120000000),  # 持续时间：0 到 120秒(微秒表示)
@@ -77,12 +78,12 @@ def detect_and_save(features, src_ip, flow_id=None):
     """
     features 传入的是原始数值列表: [Total Fwd Pkts, Flow Duration, IAT Mean, Pkt Len Std]
     """
-    # --- 【关键修改点：特征预处理】 ---
+    # --- 【特征预处理】 ---
     # 复制一份数据，避免修改原始特征影响后续 JSON 记录
     processed_feats = np.array(features, dtype=float).copy()
 
     # 对第 2, 3, 4 个特征执行同样的 Log 变换 (索引 1, 2, 3)
-    # 注意：Total Fwd Packets (索引0) 在训练代码里没做 Log，这里也不做
+    #Total Fwd Packets (索引0) 在训练代码里没做 Log，这里也不做
     processed_feats[1] = np.log1p(processed_feats[1])
     processed_feats[2] = np.log1p(processed_feats[2])
     processed_feats[3] = np.log1p(processed_feats[3])
@@ -184,22 +185,53 @@ def manual_mode():
 # ================= 主入口 =================
 
 if __name__ == "__main__":
-    while True:
-        print("\n" + "═" * 40)
-        print("🛡️ TraceGuard DDoS 实时检测终端")
-        print("1. 自动化批量检测 (读取数据集 CSV)")
-        print("2. 手动模拟检测 (单条录入特征)")
-        print("0. 退出程序")
-        print("═" * 40)
+    # --- 支持命令行参数模式 (供 Web 界面调用) ---
+    if len(sys.argv) > 1:
+        try:
+            # 获取传入的行数参数
+            num_rows = int(sys.argv[1])
+            print(f"🚀 [Web指令] 接收到自动化审计任务：检测前 {num_rows} 条数据...")
+            
+            if not os.path.exists(DATASET_PATH):
+                print(f"❌ 错误: 找不到数据集文件 {DATASET_PATH}")
+                sys.exit(1)
 
-        choice = input("请选择操作: ").strip()
+            df = pd.read_csv(DATASET_PATH)
+            # 限制行数，防止超出数据集范围
+            test_data = df.head(min(num_rows, len(df)))
+            
+            for index, row in test_data.iterrows():
+                features = [row['Total Fwd Packets'], row['Flow Duration'],
+                            row['Flow IAT Mean'], row['Packet Length Std']]
+                # 使用 CSV 原有的 Hash 保证唯一性，模拟 IP 地址
+                flow_id = row['Flow_Hash']
+                detect_and_save(features, f"192.168.1.{index + 10}", flow_id)
+            
+            print("✅ [Web指令] 自动化审计任务已完成。")
+            sys.exit(0)  # 必须正常退出，否则 Java 线程会一直阻塞
+            
+        except Exception as e:
+            print(f"❌ 自动化执行失败: {e}")
+            sys.exit(1)
 
-        if choice == '1':
-            batch_mode()
-        elif choice == '2':
-            manual_mode()
-        elif choice == '0':
-            print("👋 程序已安全退出。")
-            break
-        else:
-            print("❌ 无效选择，请输入 0, 1 或 2。")
+    # --- 交互模式 (供终端手动运行) ---
+    else:
+        while True:
+            print("\n" + "═" * 40)
+            print("🛡️ TraceGuard DDoS 实时检测终端")
+            print("1. 自动化批量检测 (读取数据集 CSV)")
+            print("2. 手动模拟检测 (单条录入特征)")
+            print("0. 退出程序")
+            print("═" * 40)
+
+            choice = input("请选择操作: ").strip()
+
+            if choice == '1':
+                batch_mode()
+            elif choice == '2':
+                manual_mode()
+            elif choice == '0':
+                print("👋 程序已安全退出。")
+                break
+            else:
+                print("❌ 无效选择，请输入 0, 1 或 2。")
