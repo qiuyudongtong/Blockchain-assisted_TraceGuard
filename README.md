@@ -118,7 +118,7 @@ To enable the real-time web monitoring and governance interface:
     java -cp "build/classes/java/main:build/resources/main:dist/lib/*" org.fisco.bcos.asset.client.DdosClient deploy
     ```
 
-3.  **Start TraceGuardTerminal.java**
+3.  **Start TraceGuardTerminal.java**：
     Your java project will running.
     ```bash
     cd ~/fisco/asset-app
@@ -146,13 +146,17 @@ You can view the real-time attack analysis by opening `dashboard.html` generated
 
 ![Dashboard Screenshot](images/dashboard.png)
 
+
 ### 2. Multi-dimensional Traceability Terminal
 The management terminal allows administrators to query blockchain evidence and perform data governance.
 
-![Terminal Preview](images/terminal.png)
-
-https://github.com/user-attachments/assets/f72b02e3-926a-474e-bde0-f60eb29dc25b
-
+<div align="left">
+  <!-- 标题：解决命名问题 -->
+  <b>📹 TraceGuard System comprehensive demonstration video</b>
+  <br/>
+  <!-- 限制宽度：解决马赛克问题 -->
+  <video src="https://github.com/user-attachments/assets/f72b02e3-926a-474e-bde0-f60eb29dc25b" controls="controls" width="800px"></video>
+</div>
 
 
 ## 🚀 Performance Benchmarking & Stress Test
