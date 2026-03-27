@@ -55,19 +55,29 @@ Python 3.8+ (TensorFlow, Pandas, Scikit-learn)
 Ensure your FISCO BCOS nodes are running in your virtual machine:
 
 ```bash
-bash nodes/127.0.0.1/stop_all.sh
-rm -rf nodes/127.0.0.1/node*/data
-rm -rf nodes/127.0.0.1/node*/log/*
-bash nodes/127.0.0.1/start_all.sh
+cd ~/fisco/nodes/127.0.0.1
+bash stop_all.sh(if your nodes are running)
+# Remove your old data
+rm -rf node*/data
+rm -rf node*/log/*
+
+bash start_all.sh
+# Ensure there are processes running
+ps -ef | grep fisco
 ```
 ### 2. Run Detection Engine (Python)
 The Python script detects DDoS attacks from the dataset and generates JSON evidence.
 
 ```bash
-cd python_detection
-python detect_service.py
+cd ~/fisco/asset-app
+rm -rf ~/fisco/asset-app/dl_detection/exchange_folder/*
+rm -rf ~/fisco/asset-app/dl_detection/archived_evidence/*
+
+# test python to generate evidence
+python3 dl_detection/detect_service.py 5
+# Or
+python3 /home/wangby/fisco/asset-app/dl_detection/detect_service.py 10
 ```
-*(Note: Select Option 1 in the menu to start batch detection.)*
 
 ### 3. Run Management Terminal (Java)
 The Java terminal handles blockchain interactions.
@@ -108,13 +118,21 @@ To enable the real-time web monitoring and governance interface:
     java -cp "build/classes/java/main:build/resources/main:dist/lib/*" org.fisco.bcos.asset.client.DdosClient deploy
     ```
 
-3.  **Start Web Server**:
+3.  **Start TraceGuardTerminal.java**
+    Your java project will running.
+    ```bash
+    cd ~/fisco/asset-app
+    java -cp "build/classes/java/main:build/resources/main:dist/lib/*" org.fisco.bcos.asset.client.TraceGuardTerminal
+    ```
+
+4.  **Start Web Server**:
     Run the backend service to host the monitoring page.
     ```bash
+    cd ~/fisco/asset-app
     java -cp "build/classes/java/main:build/resources/main:dist/lib/*" org.fisco.bcos.asset.client.TrafficWebServer
     ```
 
-4.  **Access the Interface**:
+5.  **Access the Interface**:
     *   **Local (Inside VM)**: [http://localhost:9000](http://localhost:9000)
     *   **Remote (Windows Host)**: `http://<YOUR_VM_IP>:9000`
 
@@ -132,6 +150,10 @@ You can view the real-time attack analysis by opening `dashboard.html` generated
 The management terminal allows administrators to query blockchain evidence and perform data governance.
 
 ![Terminal Preview](images/terminal.png)
+
+https://github.com/user-attachments/assets/f72b02e3-926a-474e-bde0-f60eb29dc25b
+
+
 
 ## 🚀 Performance Benchmarking & Stress Test
 
